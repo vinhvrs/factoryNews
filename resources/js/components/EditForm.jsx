@@ -170,7 +170,7 @@ export default function EditForm() {
           type="submit"
           className={`w-full text-center px-6 py-2 text-white rounded ${submitting ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'
             } transition-colors`}
-        >
+        > Submit 
         </button>
       </form>
     </div>
