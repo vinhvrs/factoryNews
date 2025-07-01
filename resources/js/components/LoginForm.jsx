@@ -19,20 +19,29 @@ export default function LoginForm() {
       }
       alert('Login successful!')
       localStorage.setItem('username', res.data.user.username)
-      localStorage.setItem('userId', res.data.user.uid)
-      
-      if (res.data.user.role === 'admin') {
-        localStorage.setItem('isAdmin', true)
-        navigate('/admin-panel')
-      } else {
-        localStorage.setItem('isAdmin', false)
-        if (res.data.user.role === 'journalist') {
-          localStorage.setItem('isWriter', true)
+      localStorage.setItem('name', res.data.user.name)
+      localStorage.setItem('userId', res.data.user.id)
+
+      switch (res.data.user.role) {
+        case 'admin':
+          localStorage.setItem('access', 'admin')
+          navigate('/admin-panel')
+          break
+
+        case 'journalist':
+          localStorage.setItem('access', 'writer')
           navigate('/writer-panel')
-        } else {
-          localStorage.setItem('isWriter', false)
+          break
+
+        case 'reader':
+          localStorage.setItem('access', 'reader')
           navigate('/')
-        }
+          break
+        
+        default:
+          localStorage.setItem('access', 'guest')
+          navigate('/')
+          break
       }
     } catch (err) {
       setError(

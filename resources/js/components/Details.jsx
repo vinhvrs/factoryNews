@@ -1,9 +1,42 @@
+import axios from 'axios'
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 export default function NewsDetail() {
   const [news, setNews] = useState(null)
+  const [author, setAuthor] = useState(null)
   const navigate = useNavigate()
+
+  const authorName = async (author_id) => {
+    const response = await axios.get(`/api/accounts/get`, {
+      params: { id: author_id }
+    })
+    if (response.status !== 200) {
+      throw new Error('Failed to fetch author name')
+    }
+    const data = response.data
+    return data.name ?? 'Anonymous Author'
+  }
+
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        const json = localStorage.getItem('currentNews')
+        if (!json) throw new Error('No news in storage')
+        const data = JSON.parse(json)
+        setNews(data)
+        if (data.author_id) {
+          const name = await authorName(data.author_id)
+          setAuthor(name)
+        }
+      } catch (error) {
+        console.error('Error fetching news:', error)
+        setNews(null)
+      }
+    }
+
+    fetchNews()
+  }, [])
 
   useEffect(() => {
     try {
@@ -35,8 +68,8 @@ export default function NewsDetail() {
       <div className="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow">
         <h1 className="text-3xl font-bold mb-4">{news.title}</h1>
         <div className="text-sm text-gray-500 mb-6 flex space-x-4">
-          <span>Publish: {new Date(news.date).toLocaleDateString('VN', { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' })}</span>
-          {news.author && <span>Author: {news.author}</span>}
+          <span>Publish: {new Date(news.create_at).toLocaleDateString('VN', { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' })}</span>
+          {author ? <span className="space-x-4">Author: {author}</span> : <span className="space-x-4"> Author: Anonymous Author</span>}
         </div>
         {news.content && (
           <p className="prose mb-6 whitespace-pre-line" dangerouslySetInnerHTML={{ __html: news.content }} />

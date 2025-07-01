@@ -3,7 +3,7 @@ import { Outlet, Link, useNavigate } from 'react-router-dom'
 
 export default function WriterLayout() {
     const [open, setOpen] = useState(false)
-    const username = localStorage.getItem('username') || 'Journalist'
+    const name = localStorage.getItem('name') || 'Journalist'
     const navigate = useNavigate()
 
     const handleLogout = () => {
@@ -26,7 +26,7 @@ export default function WriterLayout() {
                             className="flex items-center space-x-2 focus:outline-none"
                         >
                             <span>Welcome back,</span>
-                            <span className="font-semibold">{username}</span>
+                            <span className="font-semibold">{name}</span>
                             <svg
                                 className="w-4 h-4 transform transition-transform"
                                 style={{ transform: open ? 'rotate(180deg)' : 'rotate(0)' }}

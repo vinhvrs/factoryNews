@@ -1,17 +1,26 @@
-import React, { useState, useRef} from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { set } from 'lodash';
 
 export default function NewsForm() {
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [author, setAuthor] = useState(null)
+  const currentNews = JSON.parse(localStorage.getItem('currentNews')) || {};
   const navigate = useNavigate();
+
   const [form, setForm] = useState({
     title: '',
     content: '',
-    author: localStorage.getItem('username') || '',
-    uid: localStorage.getItem('userId') || ''
-  })
+    author_id: localStorage.getItem('userId') || '',
+    thumbnail_id: '',
+  });
+
+  const authorName = () => {
+    const name = localStorage.getItem('username')
+    return name ?? 'Anonymous Author'
+  }
 
   const taRef = useRef(null)
 
@@ -41,10 +50,10 @@ export default function NewsForm() {
   }
 
   function insertImage(imgData) {
-    const imgPath = imgData.imagePath.startsWith('http')
-      ? imgData.imagePath
-      : `http://localhost:1111${imgData.imagePath}`
-    const imgTag = `<img src="${imgPath}" alt="${imgData.imageAlt || imgData.imageName}" />`
+    const imgPath = imgData.path.startsWith('http')
+      ? imgData.path
+      : `http://localhost:1111${imgData.path}`
+    const imgTag = `<img src="${imgPath}" alt="${imgData.alt || imgData.name}" />`
     insertAtCursor(imgTag)
   }
 
@@ -57,9 +66,9 @@ export default function NewsForm() {
       const res = await axios.post(`/api/images/upload-temp-image`,
         data, { headers: { 'Content-Type': 'multipart/form-data' } }
       )
-      localStorage.setItem('tempImagePath', res.data.imagePath)
-      localStorage.setItem('tempImageName', res.data.imageName)
-      localStorage.setItem('tempImageAlt', res.data.imageName || 'News image')
+      localStorage.setItem('path', res.data.path)
+      localStorage.setItem('name', res.data.name)
+      localStorage.setItem('alt', res.data.name || 'News image')
       insertImage(res.data)
     } catch (err) {
       console.error(err)
@@ -73,34 +82,42 @@ export default function NewsForm() {
     setSubmitting(true)
 
     const now = handleTime()
-    const payload = { ...form, date: now }
+    const payload = { ...form, create_at: now }
 
     try {
-      const newId = await axios.post('/api/news/add', payload).then(
-        res => {
-          return res.data.newsId
-        }
-      )
-
       const imgLoaded = ({
-        newsId: newId,
-        imagePath: localStorage.getItem('tempImagePath'),
-        imageName: localStorage.getItem('tempImageName'),
-        imageAlt: localStorage.getItem('tempImageAlt')
+        path: localStorage.getItem('path'),
+        name: localStorage.getItem('name'),
+        alt: localStorage.getItem('alt'),
       })
 
-      await axios.post(`/api/images/temp-image-handle`, imgLoaded)
+      if (imgLoaded.path !== null) {
+      const $thumbnail = await axios.post(`/api/images/temp-image-handle`, imgLoaded)
         .then(resp => {
-          localStorage.removeItem('tempImagePath')
-          localStorage.removeItem('tempImageName')
-          localStorage.removeItem('tempImageAlt')
-          if (resp.statusText === 'OK'){
-            alert('Image uploaded successfully!')
+          localStorage.removeItem('path')
+          localStorage.removeItem('name')
+          localStorage.removeItem('alt')
+          if (resp.statusText === 'OK') {
             navigate(-1);
           } else {
             alert('Image upload failed.')
           }
+          return resp.data
         })
+
+        payload.thumbnail_id = $thumbnail.image.id
+      }
+
+      await axios.post(`/api/news/add`, payload).then(
+        res => {
+          if (res.status === 201) {
+            alert('News created successfully!')
+            navigate(-1)
+          } else {
+            throw new Error('Failed to create news')
+          }
+        }
+      )
     } catch (err) {
       console.error(err)
       setError(err.response?.data?.message || 'Save failed.')
@@ -155,21 +172,18 @@ export default function NewsForm() {
 
         <div>
           <label className="block text-sm font-medium mb-1">Author</label>
-          <input
-            type="text"
-            value={form.author}
-            onChange={e => setForm({ ...form, author: e.target.value })}
-            className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500"
-          />
+          <span className="block text-gray-700">
+            {author || authorName()}
+          </span>
         </div>
 
         <button
           type="submit"
           className={`w-full text-center px-6 py-2 text-white rounded ${submitting ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'
             } transition-colors`}
-        > Submit 
+        > Submit
         </button>
       </form>
     </div>
-  )
+  );
 }

@@ -6,17 +6,17 @@ use App\Models\Accounts;
 
 class News extends Model{
     protected $table = 'news';
-    protected $primaryKey = 'newsId';
-    protected $fillable = ['newsId', 'title', 'date', 'content', 'author', 'uid'];
+    protected $primaryKey = 'id';
+    protected $fillable = ['id', 'title', 'create_at', 'content', 'author_id', 'thumbnail_id'];
     public $incrementing = false;
     public $timestamps = false;
 
     public function images(){
-        return $this->hasMany(Images::class, 'newsId', 'newsId');
+        return $this->hasMany(Images::class, 'thumbnail_id', 'id');
     }
 
     public function account(){
-        return $this->belongsTo(Accounts::class, 'uid', 'uid');
+        return $this->belongsTo(Accounts::class, 'author_id', 'id');
     }
 }
 ?>

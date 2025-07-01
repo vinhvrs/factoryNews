@@ -5,14 +5,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class Images extends Model{
     protected $table =  'images';
-    protected $primaryKey = 'imageId';
-    protected $foreignKey = 'newsId';
-    protected $fillable = ['imageId', 'newsId', 'imagePath', 'imageName', 'imageAlt'];
+    protected $primaryKey = 'id';
+    protected $fillable = ['imageId', 'id', 'path', 'name', 'alt'];
     public $incrementing = false;
     public $timestamps = false;
 
     public function news(){
-        return $this->belongsTo(News::class, 'newsId', 'newsId');
+        return $this->belongsToMany(News::class, 'news', 'id');
     }
 
 }

@@ -1,42 +1,22 @@
 import React, { useEffect, useState } from 'react'
 import axios from 'axios'
-import { Link } from 'react-router-dom'
 
 export default function AccountManagement() {
-    const [users, setUsers] = useState([])
+    const [users, setUsers] = useState([])          // chỉ chứa page hiện tại
     const [currentPage, setCurrentPage] = useState(1)
+    const [totalPages, setTotalPages] = useState(0)
     const usersPerPage = 10
 
-    useEffect(() => {
-        axios.get('/api/accounts/getAll')
-            .then(response => {
-                setUsers(response.data)
-            })
-            .catch(error => {
-                console.error('Error fetching users:', error)
-            })
-    }, [])
-
-    const totalPages = Math.ceil(users.length / usersPerPage)
-    const indexOfLast = currentPage * usersPerPage
-    const indexOfFirst = indexOfLast - usersPerPage
-    const currentUsers = users.slice(indexOfFirst, indexOfLast)
-
-    const goToPage = page => {
-        if (page < 1 || page > totalPages) return
-        setCurrentPage(page)
-    }
-
-    function editRole(uid, newRole) {
-        axios.put(`/api/accounts/get-user/change-role/${uid}`, { role: newRole })
+    function editRole(id, newRole) {
+        axios.put('/api/accounts/change-role', { id: id, role: newRole })
             .then(response => {
                 if (response.statusText === 'OK') {
                     alert('Role updated successfully')
                     setUsers(prev =>
                         prev.map(u =>
-                        u.uid === uid
-                            ? { ...u, role: newRole }
-                            : u
+                            u.id === id
+                                ? { ...u, role: newRole }
+                                : u
                         )
                     )
                 }
@@ -48,6 +28,50 @@ export default function AccountManagement() {
                 console.error('Error updating role:', error)
                 alert('An error occurred while updating the role')
             })
+    }
+
+    function deleteAccount(id){
+        if (!window.confirm('Are you sure you want to delete this account?')) {
+            return
+        }
+
+        axios.delete(`/api/accounts/delete`, { data: { id: id } })
+            .then(response => {
+                if (response.statusText === 'OK') {
+                    setUsers(prev => prev.filter(u => u.id !== id))
+                } else {
+                    alert('Failed to delete account')
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting account:', error)
+                alert('An error occurred while deleting the account')
+            })
+    }
+
+    const fetchPage = page => {
+        axios.get('/api/accounts/gets', {
+            params: {
+                page,
+                per_page: usersPerPage
+            }
+        })
+            .then(res => {
+                const { data, current_page, last_page } = res.data
+                setUsers(data)
+                setCurrentPage(current_page)
+                setTotalPages(last_page)
+            })
+            .catch(console.error)
+    }
+
+    useEffect(() => {
+        fetchPage(1)
+    }, [])
+
+    const goToPage = page => {
+        if (page < 1 || page > totalPages) return
+        fetchPage(page)
     }
 
     return (
@@ -68,31 +92,28 @@ export default function AccountManagement() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200">
-                            {currentUsers.map(u => (
-                                <tr
-                                    key={u.uid}
-                                    className="odd:bg-white even:bg-gray-50 hover:bg-gray-100"
-                                >
+                            {users.map(u => (
+                                <tr key={u.id} className="odd:bg-white even:bg-gray-50 hover:bg-gray-100">
                                     <td className="px-4 py-3">{u.username}</td>
                                     <td className="px-4 py-3 text-center">{u.email}</td>
                                     <td className="px-4 py-3">
-                                        <div className="inline-block py-1 text-sm transition-colors">
-                                            <select
-                                                value={u.role}
-                                                onChange={e => editRole(u.uid, e.target.value)}
-                                                className="ml-2 bg-white border border-gray-300 rounded">
-                                                <option value="admin">Admin</option>
-                                                <option value="journalist">Writer</option>
-                                                <option value="reader">Reader</option>
-                                            </select>
-                                        </div>
+                                        <select
+                                            value={u.role}
+                                            onChange={e => editRole(u.id, e.target.value)}
+                                            className="bg-white border border-gray-300 rounded p-1"
+                                        >
+                                            <option value="admin">Admin</option>
+                                            <option value="journalist">Writer</option>
+                                            <option value="reader">Reader</option>
+                                        </select>
                                     </td>
-                                    <td className="px-4 py-3 text-center space-x-2">
-                                        <Link
-                                            to={`/accounts/${u.uid}/delete`}
-                                            className="inline-block px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors">
+                                    <td className="px-4 py-3 text-center">
+                                        <button
+                                            onClick={() => deleteAccount(u.id)}
+                                            className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
+                                        >
                                             Delete
-                                        </Link>
+                                        </button>
                                     </td>
                                 </tr>
                             ))}
@@ -100,36 +121,35 @@ export default function AccountManagement() {
                     </table>
                 </div>
 
-                <div className="flex items-center justify-center mt-6 space-x-1">
+                <div className="flex justify-center space-x-1 mt-6">
                     <button
                         onClick={() => goToPage(currentPage - 1)}
                         disabled={currentPage === 1}
-                        className="px-3 py-1 rounded border border-gray-300 disabled:opacity-50">
+                        className="px-3 py-1 border rounded disabled:opacity-50"
+                    >
                         Prev
                     </button>
-
                     {Array.from({ length: totalPages }, (_, i) => (
                         <button
-                            key={i + 1}
+                            key={`page-${i + 1}`}
                             onClick={() => goToPage(i + 1)}
-                            className={`
-                                px-3 py-1 rounded border
-                                ${currentPage === i + 1
-                                            ? 'bg-blue-600 text-white border-blue-600'
-                                            : 'border-gray-300 hover:bg-gray-100'}
-                            `}>
+                            className={`px-3 py-1 border rounded ${currentPage === i + 1
+                                    ? 'bg-blue-600 text-white border-blue-600'
+                                    : 'hover:bg-gray-100'
+                                }`}
+                        >
                             {i + 1}
                         </button>
                     ))}
-
                     <button
                         onClick={() => goToPage(currentPage + 1)}
                         disabled={currentPage === totalPages}
-                        className="px-3 py-1 rounded border border-gray-300 disabled:opacity-50">
+                        className="px-3 py-1 border rounded disabled:opacity-50"
+                    >
                         Next
                     </button>
                 </div>
             </div>
         </div>
-    );
+    )
 }

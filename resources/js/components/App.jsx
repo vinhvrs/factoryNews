@@ -14,8 +14,6 @@ import WriterLayout from './WriterLayout';
 import WriterPanel from './WriterPanel';
 import NewsForm from './NewsForm';
 import EditForm from './EditForm';
-import ImageUpload from './ImageUpLoad';
-import DisplayImage from './DisplayImage';
 
 
 import MainLayout from './MainLayout';
@@ -28,13 +26,19 @@ import NewsListofAuthor from './NewsListAuthor';
 export default function App() {
   return (
     <div onLoad={() => {
-      if (localStorage.getItem('isAdmin')){
-        <Navigate to="/admin-panel" />
-      }
-      else if (localStorage.getItem('isWriter')) {
-        <Navigate to="/writer-panel" />
-      } else {
-        <Navigate to="/" />
+      switch (localStorage.getItem('access')) {
+        case 'admin':
+          document.title = 'Admin Panel';
+          break;
+        case 'writer':
+          document.title = 'Writer Panel';
+          break;
+        case 'reader':
+          document.title = 'Reader Panel';
+          break;
+        default:
+          document.title = 'Factory News';
+          break;
       }
     }}>
       <Routes>
@@ -49,6 +53,7 @@ export default function App() {
           <Route path="/admin-panel" element={<Index />} />
           <Route path="/admin-panel/dashboard" element={<Index />} />
           <Route path="/admin-panel/news-management" element={<NewsList />} />
+          <Route path="/admin-panel/news-management/edit-news" element={<EditForm />} />
           <Route path="/admin-panel/account-management" element={<AccountManagement />} />
         </Route>
       {/* </Routes>
@@ -67,9 +72,6 @@ export default function App() {
         <Route element={<MainLayout />}>
           <Route path="/" element={<Index />} />
           <Route path="/news/:title" element={<Details />} />
-          <Route path="/upload/:newsId" element={<ImageUpload />} />
-          <Route path="/test" element={<ImageUpload />} />
-          <Route path="/test-image" element={<DisplayImage />} />
         </Route>
       </Routes>
     </div>

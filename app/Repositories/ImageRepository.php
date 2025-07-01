@@ -5,49 +5,36 @@ use App\Models\Images;
 use App\Repositories\Interfaces\ImageInterface as ImageInterface;
 
 class ImageRepository implements ImageInterface {
-    protected $image;
+    protected $limit = 10;
 
     public function __construct(){
         $this->image = new Images();
     }
 
-    public function addImage(array $image)
+    public function addImage(array $image): Images
     {
-        return $this->image->create([
-            'imageId' => uniqid(),
-            'newsId' => $image['newsId'],
-            'imagePath' => $image['imagePath'],
-            'imageName' => $image['imageName'] ?? null,
-            'imageAlt' => $image['imageAlt'] ?? null
+        return Images::create([
+            'id' => uniqid(),
+            'path' => $image['path'],
+            'name' => $image['name'],
+            'alt' => $image['alt'] ?? $image['name'] ?? null
         ]);
-        
     }
 
-    public function getNameByImageId($imageId)
+    public function getImageName($id)
     {
-        $image = $this->image->find($imageId);
-        return $image ? $image->imageName : null;
+        $image = Images::find($id);
+        return $image ? $image->name : null;
     }
 
-    public function getImagePathById($imageId)
+    public function getImage($id)
     {
-        $image = $this->image->find($imageId);
-        return $image ? $image->imagePath : null;
+        return Images::find($id);
     }
 
-    public function getImageById($imageId)
+    public function deleteImage($id)
     {
-        return $this->image->find($imageId);
-    }
-
-    public function getImagesByNewsId($newsId)
-    {
-        return $this->image->where('newsId', $newsId)->get();
-    }
-
-    public function deleteImage($imageId)
-    {
-        return $this->image->destroy($imageId);
+        return Images::destroy($id);
     }
 }
 

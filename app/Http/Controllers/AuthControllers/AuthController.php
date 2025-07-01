@@ -4,16 +4,17 @@ namespace App\Http\Controllers\AuthControllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Repositories\AccountRepository;
+use Illuminate\Http\JsonResponse;
 use App\Models\Accounts;
 
 class AuthController extends Controller{
-    protected $accountRepository;
+    protected AccountRepository $accountRepository;
     public function __construct(AccountRepository $accountRepository)
     {
         $this->accountRepository = $accountRepository;
     }
 
-    public function login(Request $request){
+    public function login(Request $request): JsonResponse{
         $credentials = $request->validate([
             "username" => "required|string",
             "password" => "required|string"
@@ -26,7 +27,7 @@ class AuthController extends Controller{
             return response()->json([
                 'message' => 'Login successful',
                 'user' => [
-                    'uid' => $user->uid,
+                    'id' => $user->id,
                     'username' => $user->username,
                     'role' => $user->role,
                     'name' => $user->name,
@@ -38,7 +39,7 @@ class AuthController extends Controller{
         }
     }
 
-    public function logout(Request $request){
+    public function logout(): JsonResponse{
         return response()->json(['message' => 'Logout successful'], 200);
     }
 }

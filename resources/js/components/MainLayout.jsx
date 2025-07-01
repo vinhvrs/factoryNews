@@ -5,11 +5,12 @@ import { Outlet, Link, useNavigate } from 'react-router-dom'
 export default function MainLayout() {
 
   const [open, setOpen] = useState(false)
-  const username = localStorage.getItem('username') || 'Guest'
+  const name = localStorage.getItem('name') || 'Guest'
+  const navigate = useNavigate()
 
   const handleLogout = () => {
     localStorage.clear()
-    useNavigate('/login')
+    navigate('/login')
   }
 
   return (
@@ -26,7 +27,7 @@ export default function MainLayout() {
               className="flex items-center space-x-2 focus:outline-none"
             >
               <span>Welcome back,</span>
-              <span className="font-semibold">{username}</span>
+              <span className="font-semibold">{name}</span>
               <svg
                 className="w-4 h-4 transform transition-transform"
                 style={{ transform: open ? 'rotate(180deg)' : 'rotate(0)' }}

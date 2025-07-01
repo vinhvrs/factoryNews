@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration{
     public function up(): void{
         Schema::create('accounts', function (Blueprint $table){
-            $table->string('uid', 36)->primary();
+            $table->string('id', 36)->primary();
             $table->string('username')->unique()->nullable(false);
             $table->string('password')->nullable(false);
             $table->string('role')->default('reader');
@@ -15,9 +15,9 @@ return new class extends Migration{
         });
     }
 
-    public function down(): void{
-        Schema::dropIfExists('accounts');
-    }
+    // public function down(): void{
+    //     Schema::dropIfExists('accounts');
+    // }
 }
 
 

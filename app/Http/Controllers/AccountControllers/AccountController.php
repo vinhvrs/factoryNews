@@ -3,8 +3,10 @@ namespace App\Http\Controllers\AccountControllers;
 
 use App\Http\Controllers\Controller;
 use App\Repositories\AccountRepository;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Models\Accounts;
+use PHPUnit\Util\Json;
 
 
 class AccountController extends Controller{
@@ -16,21 +18,70 @@ class AccountController extends Controller{
         $this->accountRepository = $accountRepository;
     }
 
-    public function getAllAccounts()
-    {
-        $accounts = $this->accountRepository->getAllAccounts();
+    //============== GET ACCOUNTS ==============
+
+    public function getAccounts(): JsonResponse{
+        $accounts = $this->accountRepository->getAccounts();
         if ($accounts->isEmpty()) {
             return response()->json(['message' => 'No accounts found'], 404);
         }
         return response()->json($accounts, 200);
     }
 
+    public function getAccountName(Request $request): JsonResponse{
+        $id = $request->input('id');
+        if (!$id) {
+            return response()->json(['message' => 'Account ID is required'], 400);
+        }
+        $name = $this->accountRepository->getAccountName($id);
+        if (!$name) {
+            return response()->json(['message' => 'Account not found'], 404);
+        }
+        return response()->json(['name' => $name], 200);
+    }
 
-    public function addAccount(Request $request){
+    public function getAccount(Request $request): JsonResponse{
+        $id = $request->query('id');
+        $email = $request->query('email');
+        $name = $request->query('name');
+
+        if ($id) {
+            $account = $this->accountRepository->getAccountById($id);
+
+            if (!$account) {
+                return response()->json(['message' => 'Account not found'], 404);
+            }
+
+            return response()->json($account, 200);
+        } 
+            
+        if ($email) {
+            $account = $this->accountRepository->getAccountByEmail($email);
+            if (!$account) {
+                return response()->json(['message' => 'Account not found'], 404);
+            }
+            return response()->json($account, 200);
+        } 
+        
+        if ($name) {
+            $account = $this->accountRepository->getAccountByName($name);
+            if (!$account) {
+                return response()->json(['message' => 'Account not found'], 404);
+            }
+            return response()->json($account, 200);
+        } 
+
+        return response()->json(['message' => 'Account not found'], 404);
+    }
+
+    //============== ADD ACCOUNT ==============
+
+    public function addAccount(Request $request): JsonResponse{
+        $request->input('role', 'reader');
         $data = $request->validate([
             'username' => 'required|string|unique:accounts,username',
-            'password' => 'required|string|min:6',
-            'role'     => 'required|string|in:reader,journalist,admin',
+            'password' => 'required|string|min:4',
+            'role'     => 'nullable|string|in:reader,journalist,admin' ?? 'reader',
             'email'    => 'required|email|unique:accounts,email',
             'name'     => 'nullable|string',
         ]);
@@ -43,7 +94,7 @@ class AccountController extends Controller{
             return response()->json(['message' => 'Account creation failed'], 500);
         }
         $account = [
-            'uid' => $account->uid,
+            'id' => $account->id,
             'username' => $account->username,
             'role' => $account->role,
             'email' => $account->email,
@@ -52,80 +103,21 @@ class AccountController extends Controller{
         return response()->json($account, 201);
     }
 
-    public function getAccount($uid){
-        $account = $this->accountRepository->getAccountByUid($uid);
-        if (!$account) {
-            return response()->json(['message' => 'Account not found'], 404);
-        }
-        return response()->json($account, 200);
-    }
+    //============== UPDATE ACCOUNT ==============
 
-    public function getAccountByUsername(Request $request){
-        $username = $request->input('username');
-        $account = $this->accountRepository->getAccountByUsername($username);
-        if (!$account) {
-            return response()->json(['message' => 'Account not found'], 404);
-        }
-        return response()->json($account, 200);
-    }
-
-    public function getAccountByEmail($email){
-        $account = $this->accountRepository->getAccountByEmail(($email));
-        if (!$account) {
-            return response()->json(['message' => 'Account not found'], 404);
-        }
-        return response()->json($account, 200);
-    }
-
-    public function changeRole(Request $request, $uid)
-    {
-        $account = $this->accountRepository->getAccountByUid($uid);
-        if (!$account) {
-            return response()->json(['message' => 'Account not found'], 404);
-        }
-
+    public function updateAccount(Request $request): JsonResponse{
         $data = $request->validate([
-            'role' => 'required|string|in:reader,journalist,admin',
-        ]);
-
-        $account = $this->accountRepository->updateAccount($uid, [
-            'uid' => $account->uid,
-            'username' => $account->username,
-            'password' => $account->password,
-            'role' => $data['role'],
-            'email' => $account->email,
-            'name' => $account->name
-        ]);
-
-        if (!$account) {
-            return response()->json(['message' => 'Role update failed'], status: 500);
-        }
-
-        return response()->json($account, 200);
-    }
-
-    public function updateAccount(Request $request, $uid)
-    {
-        $account = $this->accountRepository->getAccountByUid($uid);
-        if (!$account) {
-            return response()->json(['message' => 'Account not found'], 404);
-        }   
-
-        $data = $request->validate([
+            'id'       => 'required|string|exists:accounts,id',
             'password' => 'sometimes|required|string|min:6',
-            'role'     => 'sometimes|required|string|in:reader,journalist,admin',
             'email'    => 'sometimes|required|email|unique:accounts,email',
             'name'     => 'sometimes|nullable|string',
         ]);
 
-        $data['username'] = $account->username; // Keep the existing username
-        $data['uid'] = $account->uid; // Keep the existing UID
-
         if (isset($data['password'])) {
-            $data['password'] = bcrypt($data['password']);
+            $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
         }
 
-        $account = $this->accountRepository->updateAccount($uid, $data);
+        $account = $this->accountRepository->updateAccount($data);
 
         if (!$account) {
             return response()->json(['message' => 'Account update failed'], 500);
@@ -134,9 +126,30 @@ class AccountController extends Controller{
         return response()->json($account, 200);
     }
 
-    public function deleteAccount($uid)
+    public function changeRole(Request $request)
     {
-        $deleted = $this->accountRepository->deleteAccount($uid);
+        $data = $request->validate([
+            'id' => 'required|string|exists:accounts,id',
+            'role' => 'required|string|in:reader,journalist,admin'
+        ]);
+
+        $id = $data['id'];
+
+        $account = $this->accountRepository->setRole($id, $data['role']);
+
+        if (!$account) {
+            return response()->json(['message' => 'Account not found or role update failed'], 404);
+        }
+
+        return response()->json($account, 200);
+    }
+
+    //============== DELETE ACCOUNT ==============
+
+    public function deleteAccount(Request $request)
+    {
+        $id = $request->input('id');
+        $deleted = $this->accountRepository->deleteAccount($id);
         if (!$deleted) {
             return response()->json(['message' => 'Account deletion failed'], 500);
         }

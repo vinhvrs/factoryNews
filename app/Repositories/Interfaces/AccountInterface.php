@@ -5,13 +5,13 @@ use App\Models\Accounts;
 
 interface AccountInterface {
     public function addAccount(array $account): Accounts;
-    public function getAccountByUid($uid);
-    public function setRole($uid, $role);
-    public function getAccountByUsername($username);
+    public function getAccountById($id);
+    public function setRole($id, $role);
+    public function getAccountByName($name);
     public function getAccountByEmail($email);
-    public function getAllAccounts();
-    public function updateAccount($uid, array $account): Accounts;
-    public function deleteAccount($uid);
+    public function getAccounts();
+    public function updateAccount(array $account): Accounts;
+    public function deleteAccount($id);
 }
 
 
