@@ -14,7 +14,7 @@ export default function LoginForm() {
 
     try {
       const res = await axios.post('/api/auth/login', { username, password })
-      if (res.statusText !== 'OK') {
+      if (res.status !== 200) {
         throw new Error('Login failed. Please try again!')
       }
       alert('Login successful!')

@@ -42,33 +42,28 @@ export default function App() {
       }
     }}>
       <Routes>
+        {/* Auth Routes */}
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginForm />} />
           <Route path="/register" element={<RegisterForm />} />
         </Route>
-      {/* </Routes>
-
-      <Routes> */}
-        <Route element={<AdminLayout />}>
-          <Route path="/admin-panel" element={<Index />} />
-          <Route path="/admin-panel/dashboard" element={<Index />} />
-          <Route path="/admin-panel/news-management" element={<NewsList />} />
-          <Route path="/admin-panel/news-management/edit-news" element={<EditForm />} />
-          <Route path="/admin-panel/account-management" element={<AccountManagement />} />
+        { /* Admin Routes */ }
+        <Route path="/admin-panel" element={<AdminLayout />}>
+          <Route index element={<Index />} />
+          <Route path="dashboard" element={<Index />} />
+          <Route path="news-management" element={<NewsList />} />
+          <Route path="news-management/edit-news" element={<EditForm />} />
+          <Route path="account-management" element={<AccountManagement />} />
         </Route>
-      {/* </Routes>
-
-      <Routes> */}
-        <Route element={<WriterLayout />}>
-          <Route path="/writer-panel" element={<Index />} />
-          <Route path="/writer-panel/dashboard" element={<Index />} />
-          <Route path="/writer-panel/news-management" element={<NewsListofAuthor />} />
-          <Route path="/writer-panel/create-news" element={<NewsForm />} />
-          <Route path="/writer-panel/edit-news" element={<EditForm />} />
+        {/* Writer Routes */}
+        <Route path="/writer-panel" element={<WriterLayout />}>
+          <Route index element={<Index />} />
+          <Route path="dashboard" element={<Index />} />
+          <Route path="news-management" element={<NewsListofAuthor />} />
+          <Route path="create-news" element={<NewsForm />} />
+          <Route path="edit-news" element={<EditForm />} />
         </Route>
-      {/* </Routes>
-
-      <Routes> */}
+        {/* Guest Routes */}
         <Route element={<MainLayout />}>
           <Route path="/" element={<Index />} />
           <Route path="/news/:title" element={<Details />} />

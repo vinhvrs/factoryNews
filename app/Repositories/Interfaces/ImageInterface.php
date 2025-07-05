@@ -1,9 +1,9 @@
 <?php
 namespace App\Repositories\Interfaces;
 interface ImageInterface {
-    public function addImage(array $image);
-    public function getImage($id);
-    public function deleteImage($id);
+    public function create(array $image);
+    public function get($id, $name, $path);
+    public function delete($id);
 }
 
 ?>

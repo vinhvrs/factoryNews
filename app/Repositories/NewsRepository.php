@@ -2,7 +2,9 @@
 namespace App\Repositories;
 
 use App\Models\News;
+use Ramsey\Uuid\Uuid;
 use App\Repositories\Interfaces\NewsInterface as NewsInterface;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class NewsRepository implements NewsInterface {
     protected $limit = 10;
@@ -11,56 +13,39 @@ class NewsRepository implements NewsInterface {
         $this->news = [];
     }
 
-    public function addNews(array $news): News{
+    public function create(array $news): News{
         return News::create([
-            'id' => uniqid(),
+            'id' => $news['id'] ?? Uuid::uuid4()->toString(),
             'title' => $news['title'],
-            'create_at' => $news['create_at'],
             'content' => $news['content'],
             'author_id' => $news['author_id'],
             'thumbnail_id' => $news['thumbnail_id'] ?? null,
         ]);
     }
-    
-    public function getAllNews(){
-        return News::query()
-            ->orderBy('create_at', 'desc')
-            ->paginate($this->limit)
-            ->withQueryString();
+
+    public function findAll($filter, $select, $perPage): LengthAwarePaginator{
+        $query = News::query();
+
+        foreach ($filter as $column => $value) {
+            if (!empty($value)) {
+                $query->where($column, 'LIKE', "%{$value}%");
+            }
+        }
+
+        $query->select($select)
+              ->orderBy('updated_at', 'desc');
+
+        return $query->paginate($perPage)->withQueryString();
     }
 
-    public function getNewsDetails($id){
-        return News::query()
-            ->find($id);
+    public function find($id): News|null{
+        return News::find($id);
     }
 
-    public function getNewsByAuthor($authorId){
-        return News::query()
-            ->where('author_id', 'LIKE', "%{$authorId}%")
-            ->orderBy('create_at', 'desc')
-            ->paginate($this->limit);
-    }
-
-    public function getNewsByTitle($title){
-        return News::query()
-            ->where('title', 'LIKE', "%{$title}%")
-            ->orderBy('title', 'desc')
-            ->paginate($this->limit);
-    }
-
-    public function getNewsByDate($createAt){
-        return News::query()
-            ->where('create_at', 'LIKE', "%{$createAt}%")
-            ->orderBy('create_at', 'desc')
-            ->paginate($this->limit);
-    }
-
-
-    public function updateNews($id, array $news): News{
+    public function update($id, array $news): News|null{
         $existingNews = News::find($id);
-        if ($existingNews !== null) {
+        if ($existingNews) {
             $existingNews->title = $news['title'];
-            $existingNews->create_at = $news['create_at'];
             $existingNews->content = $news['content'];
             $existingNews->save();
             return $existingNews;
@@ -68,19 +53,14 @@ class NewsRepository implements NewsInterface {
         return null;
     }
 
-    public function deleteNews($id){
-        $news = News::find($id)
-            ->first();
+    public function delete($id): bool{
+        $news = News::find($id);
         if ($news) {
             $news->delete();
             return true;
         }
         return false;
     }
-
-
 }
-
-
 
 ?>

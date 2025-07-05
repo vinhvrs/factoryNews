@@ -19,24 +19,32 @@ class AuthController extends Controller{
             "username" => "required|string",
             "password" => "required|string"
         ]);
-        $user = $this->accountRepository->getAccountByUsername($credentials['username']);
+        $user = $this->accountRepository->login($credentials['username'], 
+                                                $credentials['password']);
         if (!$user) {
-            return response()->json(['message' => 'User not found'], 404);
+            return response()->json(['message' => 'User not found'], 204);
         }
-        if (password_verify($credentials['password'], $user->password)) {
-            return response()->json([
-                'message' => 'Login successful',
-                'user' => [
-                    'id' => $user->id,
-                    'username' => $user->username,
-                    'role' => $user->role,
-                    'name' => $user->name,
-                    'email' => $user->email
-                ]
-            ], 200);
-        } else {
-            return response()->json(['message' => 'Invalid credentials'], 401);
+
+        return response()->json(['message' => 'Login successful', 'user' => $user], 200);
+    }
+
+    public function register(Request $request): JsonResponse{
+        $data = $request->validate([
+            'username' => 'required|string|unique:accounts,username',
+            'password' => 'required|string|min:4',
+            'email' => 'required|email|unique:accounts,email',
+            'name' => 'nullable|string',
+        ]);
+
+        $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
+
+        $account = $this->accountRepository->create($data);
+
+        if (!$account) {
+            return response()->json(['message' => 'Account creation failed'], 500);
         }
+
+        return response()->json(['message' => 'Account created successfully'], 201);
     }
 
     public function logout(): JsonResponse{

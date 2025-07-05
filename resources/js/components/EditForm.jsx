@@ -12,15 +12,12 @@ export default function EditForm() {
   const [form, setForm] = useState({
     id: currentNews.id || '',
     title: currentNews.title || '',
-    date: '',
     content: currentNews.content || '',
     author_id: currentNews.author_id || '',
   });
 
   const authorName = async (author_id) => {
-    const response = await axios.get(`/api/accounts/get`, {
-      params: { id: author_id }
-    })
+    const response = await axios.get(`/api/accounts/${author_id}`)
     if (response.status !== 200) {
       throw new Error('Failed to fetch author name')
     }
@@ -29,17 +26,6 @@ export default function EditForm() {
   }
 
   const taRef = useRef(null)
-
-  function handleTime() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-  }
 
   const insertAtCursor = text => {
     const ta = taRef.current
@@ -69,9 +55,9 @@ export default function EditForm() {
     const data = new FormData()
     data.append('image', file)
     try {
-      const res = await axios.post(`/api/images/upload-temp-image`,
-        data, { headers: { 'Content-Type': 'multipart/form-data' } }
-      )
+      const res = await axios.post(`/api/images`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
       localStorage.setItem('path', res.data.path)
       localStorage.setItem('name', res.data.name)
       localStorage.setItem('alt', res.data.name || 'News image')
@@ -87,8 +73,7 @@ export default function EditForm() {
     setError('')
     setSubmitting(true)
 
-    const now = handleTime()
-    const payload = { ...form, create_at: now }
+    const payload = { ...form }
 
     try {
       const imgLoaded = ({
@@ -98,23 +83,22 @@ export default function EditForm() {
       })
 
       if (imgLoaded.path !== null) {
-      const $thumbnail = await axios.post(`/api/images/temp-image-handle`, imgLoaded)
-        .then(resp => {
-          localStorage.removeItem('path')
-          localStorage.removeItem('name')
-          localStorage.removeItem('alt')
-          if (resp.statusText === 'OK') {
-            navigate(-1);
-          } else {
-            alert('Image upload failed.')
-          }
-          return resp.data
-        })
+        const $thumbnail = await axios.put(`/api/images`, imgLoaded)
+          .then(resp => {
+            localStorage.removeItem('path')
+            localStorage.removeItem('name')
+            localStorage.removeItem('alt')
+            if (resp.statusText === 'OK') {
+            } else {
+              alert('Image upload failed.')
+            }
+            return resp.data
+          })
 
         payload.thumbnail_id = $thumbnail.image.id
       }
 
-      await axios.put(`/api/news/update`, payload).then(
+      await axios.put(`/api/news/${form.id}`, payload).then(
         res => {
           if (res.status === 200) {
             alert('News updated successfully!')
@@ -132,25 +116,25 @@ export default function EditForm() {
     }
   }
 
-useEffect(() => {
-  if (!currentNews.author_id) {
-    setAuthor('Anonymous Author')
-    return
-  };(async () => {
-    try {
-      const name = await authorName(currentNews.author_id)
-      setAuthor(name)
-    } catch {
+  useEffect(() => {
+    if (!currentNews.author_id) {
       setAuthor('Anonymous Author')
-    }
-  })()
-}, [currentNews.author_id])
+      return
+    }; (async () => {
+      try {
+        const name = await authorName(currentNews.author_id)
+        setAuthor(name)
+      } catch {
+        setAuthor('Anonymous Author')
+      }
+    })()
+  }, [currentNews.author_id])
 
 
   return (
     <div className="max-w-2xl mx-auto p-6 bg-white rounded shadow">
       <h2 className="text-2xl font-bold mb-4">
-        Create News
+        Edit News
       </h2>
 
       {error && (

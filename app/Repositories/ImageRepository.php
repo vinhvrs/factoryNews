@@ -2,6 +2,7 @@
 namespace App\Repositories;
 
 use App\Models\Images;
+use Ramsey\Uuid\Uuid;
 use App\Repositories\Interfaces\ImageInterface as ImageInterface;
 
 class ImageRepository implements ImageInterface {
@@ -11,28 +12,25 @@ class ImageRepository implements ImageInterface {
         $this->image = new Images();
     }
 
-    public function addImage(array $image): Images
+    public function create(array $image): Images
     {
         return Images::create([
-            'id' => uniqid(),
+            'id' => $image['id'] ?? Uuid::uuid4()->toString(),
             'path' => $image['path'],
             'name' => $image['name'],
             'alt' => $image['alt'] ?? $image['name'] ?? null
         ]);
     }
 
-    public function getImageName($id)
+    public function get($id, $name, $path)
     {
-        $image = Images::find($id);
-        return $image ? $image->name : null;
+        return Images::where('id', "LIKE", "%$id%")
+            ->where('name', 'LIKE', "%$name%")
+            ->where('path', 'LIKE', "%$path%")
+            ->paginate($this->limit);
     }
 
-    public function getImage($id)
-    {
-        return Images::find($id);
-    }
-
-    public function deleteImage($id)
+    public function delete($id)
     {
         return Images::destroy($id);
     }

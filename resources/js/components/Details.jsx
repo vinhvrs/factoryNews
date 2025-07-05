@@ -8,9 +8,7 @@ export default function NewsDetail() {
   const navigate = useNavigate()
 
   const authorName = async (author_id) => {
-    const response = await axios.get(`/api/accounts/get`, {
-      params: { id: author_id }
-    })
+    const response = await axios.get(`/api/accounts/${author_id}`)
     if (response.status !== 200) {
       throw new Error('Failed to fetch author name')
     }
@@ -68,7 +66,7 @@ export default function NewsDetail() {
       <div className="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow">
         <h1 className="text-3xl font-bold mb-4">{news.title}</h1>
         <div className="text-sm text-gray-500 mb-6 flex space-x-4">
-          <span>Publish: {new Date(news.create_at).toLocaleDateString('VN', { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' })}</span>
+          <span>Publish: {new Date(news.updated_at).toLocaleDateString('VN', { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' })}</span>
           {author ? <span className="space-x-4">Author: {author}</span> : <span className="space-x-4"> Author: Anonymous Author</span>}
         </div>
         {news.content && (

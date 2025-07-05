@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 
 export default function AccountManagement() {
-    const [users, setUsers] = useState([])          // chỉ chứa page hiện tại
+    const [users, setUsers] = useState([])          
     const [currentPage, setCurrentPage] = useState(1)
     const [totalPages, setTotalPages] = useState(0)
     const usersPerPage = 10
 
     function editRole(id, newRole) {
-        axios.put('/api/accounts/change-role', { id: id, role: newRole })
+        axios.put(`/api/accounts/${id}/role`, { role: newRole })
             .then(response => {
                 if (response.statusText === 'OK') {
                     alert('Role updated successfully')
@@ -30,15 +30,19 @@ export default function AccountManagement() {
             })
     }
 
-    function deleteAccount(id){
+    function deleteAccount(id) {
         if (!window.confirm('Are you sure you want to delete this account?')) {
             return
         }
 
-        axios.delete(`/api/accounts/delete`, { data: { id: id } })
+        axios.delete(`/api/accounts/${id}`)
             .then(response => {
                 if (response.statusText === 'OK') {
-                    setUsers(prev => prev.filter(u => u.id !== id))
+                    const isOnlyRowOnPage = users.length === 1;
+                    const nextPage = (isOnlyRowOnPage && currentPage > 1)
+                        ? currentPage - 1
+                        : currentPage;
+                    fetchPage(nextPage);
                 } else {
                     alert('Failed to delete account')
                 }
@@ -50,7 +54,7 @@ export default function AccountManagement() {
     }
 
     const fetchPage = page => {
-        axios.get('/api/accounts/gets', {
+        axios.get('/api/accounts', {
             params: {
                 page,
                 per_page: usersPerPage
@@ -134,8 +138,8 @@ export default function AccountManagement() {
                             key={`page-${i + 1}`}
                             onClick={() => goToPage(i + 1)}
                             className={`px-3 py-1 border rounded ${currentPage === i + 1
-                                    ? 'bg-blue-600 text-white border-blue-600'
-                                    : 'hover:bg-gray-100'
+                                ? 'bg-blue-600 text-white border-blue-600'
+                                : 'hover:bg-gray-100'
                                 }`}
                         >
                             {i + 1}

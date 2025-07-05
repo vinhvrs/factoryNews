@@ -2,16 +2,15 @@
 namespace App\Repositories\Interfaces;
 
 use App\Models\Accounts;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 interface AccountInterface {
-    public function addAccount(array $account): Accounts;
-    public function getAccountById($id);
-    public function setRole($id, $role);
-    public function getAccountByName($name);
-    public function getAccountByEmail($email);
-    public function getAccounts();
-    public function updateAccount(array $account): Accounts;
-    public function deleteAccount($id);
+    public function create(array $account): Accounts;
+    public function find($id, array $select): Accounts|null;
+    public function findAll(array $filters, array $select, int $perPage): LengthAwarePaginator;
+
+    public function update(array $account): Accounts;
+    public function delete($id): bool;
 }
 
 

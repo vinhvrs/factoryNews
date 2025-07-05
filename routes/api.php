@@ -7,32 +7,47 @@ use App\Http\Controllers\AuthControllers\AuthController;
 
 Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
-    Route::post('/register', [AccountController::class, 'addAccount']);
+    Route::post('/register', [AuthController::class, 'register']);
 });
 
-Route::prefix('news')->group(function () {
-    Route::get('/gets', [NewsController::class, 'getAllNews']);
-    Route::get('/get', [NewsController::class, 'getNewsDetails']);
-    Route::post('/add', [NewsController::class, 'addNews']);
-    Route::put('/update', [NewsController::class, 'updateNews']);
-    Route::delete('/delete', [NewsController::class, 'deleteNews']);
+// Route::middleware(['auth:sanctum'])->group(function () {
+//     Route::get('/user', [AuthController::class, 'getUser']);
+//     Route::post('/logout', [AuthController::class, 'logout']);
+// });
+
+Route::prefix('accounts')->group(function () {
+    Route::get('/', [AccountController::class, 'index']);
+    Route::post('/', [AccountController::class, 'store']);
+
+    Route::prefix('/{id}')->group(function () {
+        Route::get('/', [AccountController::class, 'show']);
+        Route::put('/', [AccountController::class, 'update']);
+        Route::put('/role', [AccountController::class, 'updateRole']);
+        Route::delete('/', [AccountController::class, 'destroy']);
+    });
+});
+
+Route::prefix('news')->group(function(){
+    Route::get('/', [NewsController::class, 'index']);
+    Route::post('/', [NewsController::class, 'store']);
+
+    Route::prefix('/{id}')->group(function () {
+        Route::get('/', [NewsController::class, 'show']);
+        Route::put('/', [NewsController::class, 'update']);
+        Route::delete('/', [NewsController::class, 'delete']);
+    });
 });
 
 Route::prefix('images')->group(function () {
-    Route::get('/get', [ImageController::class, 'getImage']);
-    Route::post('/upload-temp-image', [ImageController::class, 'uploadTempImage']);
-    Route::post('/temp-image-handle', [ImageController::class, 'tempImageHandle']);
-    Route::delete('/delete', [ImageController::class, 'deleteImage']);
-});
+    Route::get('/', [ImageController::class, 'index']);
+    Route::post('/', [ImageController::class, 'uploadImage']);
+    Route::put('/', [ImageController::class, 'saveImage']);
 
-Route::prefix('accounts')->group(function () {
-    Route::get('/gets', [AccountController::class, 'getAccounts']);
-    Route::get('/get', [AccountController::class, 'getAccount']);
-    Route::post('/add', [AccountController::class, 'addAccount']);
-    Route::put('/change-role', [AccountController::class, 'changeRole']);
-    Route::put('/change-info', [AccountController::class, 'updateAccount']);
-    Route::delete('/delete', [AccountController::class, 'deleteAccount']);
-
+    Route::prefix('/{id}')->group(function (){
+        Route::get('/', [ImageController::class, 'index']);
+        Route::delete('/', [ImageController::class, 'destroy']);
+    });
+    
 });
 
 ?>

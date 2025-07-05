@@ -10,7 +10,7 @@ export default function DisplayNews() {
   const navigate = useNavigate();
 
   const fetchPage = page => {
-    axios.get('/api/news/gets', {
+    axios.get('/api/news', {
       params: { 
         page, 
         per_page: newsPerPage 
@@ -62,7 +62,7 @@ export default function DisplayNews() {
               <tr key={n.id} className="hover:bg-gray-100">
                 <td className="px-4 py-3">{n.title}</td>
                 <td className="px-4 py-3 text-center">
-                  {new Date(n.create_at).toLocaleDateString('VN')}
+                  {new Date(n.updated_at).toLocaleDateString('VN')}
                 </td>
                 <td className="px-4 py-3 text-center">
                     <button 

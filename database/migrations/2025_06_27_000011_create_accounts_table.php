@@ -12,6 +12,7 @@ return new class extends Migration{
             $table->string('role')->default('reader');
             $table->string('email')->unique()->nullable(false);
             $table->string('name')->nullable();
+            $table->timestamps();
         });
     }
 

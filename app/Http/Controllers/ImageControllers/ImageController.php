@@ -3,14 +3,11 @@ namespace App\Http\Controllers\ImageControllers;
 
 use App\Http\Controllers\Controller;
 use App\Repositories\ImageRepository;
-use App\Models\News;
-use App\Models\Images;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Laravel\Pail\ValueObjects\Origin\Console;
 
 class ImageController extends Controller{
     protected ImageRepository $imageRepository;
@@ -21,18 +18,20 @@ class ImageController extends Controller{
 
     // ================ GET IMAGES ==============
 
-        public function getImage(Request $request): JsonResponse{
-        $id = $request->input('id');
-        $image = $this->imageRepository->getImage($id);
+    public function index(Request $request): JsonResponse{
+        $id = $request->route('id', '');
+        $name = $request->query('name', '');
+        $path = $request->query('path', '');
+        $image = $this->imageRepository->get($id, $name, $path);
         if (!$image) {
-            return response()->json(['message' => 'Image not found'], 404);
+            return response()->json(['message' => 'Image not found'], status: 404);
         }
         return response()->json($image, 200);
-    }    
+    }
 
     //================ POST IMAGE ==============
 
-    public function uploadTempImage(Request $request): JsonResponse{
+    public function uploadImage(Request $request): JsonResponse{
         $request->validate([
             'image' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
         ]);
@@ -52,14 +51,14 @@ class ImageController extends Controller{
         ], 201);
     }
 
-    public function tempImageHandle(Request $request): JsonResponse{
+    public function saveImage(Request $request): JsonResponse{
         $request->validate([
             'path' => 'required|string',
             'name' => 'required|string',
             'alt' => 'nullable|string',
         ]);
         
-        $image = $this->imageRepository->addImage([
+        $image = $this->imageRepository->create([
             'path' => $request['path'],
             'name' => $request['name'],
             'alt' => $request->input('alt', 'Default Alt Text')
@@ -69,26 +68,24 @@ class ImageController extends Controller{
 
     //================ DELETE IMAGE ==============
 
-    public function deleteImage(Request $request): JsonResponse{
-        $data = $request->validate(['id' => 'required|string:id']);
-        $id = $data['id'];
-
-        $image = $this->imageRepository->getImage($id);
-        if (!$image) {
+    public function destroy(Request $request): JsonResponse{
+        $id = $request->route('id');
+        $image = $this->imageRepository->get($id, '', '');
+        $data = $image->items();
+        if (!$data) {
             return response()->json(['message' => 'Image not found'], 404);
         }
 
-        $path = $image->path;
+        $path = $data[0]->path;
         $storage = "/storage/";
         $path = Str::replaceFirst($storage, '', $path);
-
         $check = Storage::disk('public')->delete($path);
 
         if (!$check) {
             return response()->json(['message' => 'Failed to delete image from storage'], 500);
         }
 
-        $this->imageRepository->deleteImage($id);
+        $this->imageRepository->delete($id);
 
         return response()->json(['message' => 'Image deleted successfully'], 200);
     }

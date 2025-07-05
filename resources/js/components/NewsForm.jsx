@@ -7,7 +7,6 @@ export default function NewsForm() {
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [author, setAuthor] = useState(null)
-  const currentNews = JSON.parse(localStorage.getItem('currentNews')) || {};
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -23,18 +22,7 @@ export default function NewsForm() {
   }
 
   const taRef = useRef(null)
-
-  function handleTime() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-  }
-
+  
   const insertAtCursor = text => {
     const ta = taRef.current
     if (!ta) return
@@ -63,9 +51,9 @@ export default function NewsForm() {
     const data = new FormData()
     data.append('image', file)
     try {
-      const res = await axios.post(`/api/images/upload-temp-image`,
-        data, { headers: { 'Content-Type': 'multipart/form-data' } }
-      )
+      const res = await axios.post(`/api/images`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
       localStorage.setItem('path', res.data.path)
       localStorage.setItem('name', res.data.name)
       localStorage.setItem('alt', res.data.name || 'News image')
@@ -81,8 +69,7 @@ export default function NewsForm() {
     setError('')
     setSubmitting(true)
 
-    const now = handleTime()
-    const payload = { ...form, create_at: now }
+    const payload = { ...form }
 
     try {
       const imgLoaded = ({
@@ -92,7 +79,7 @@ export default function NewsForm() {
       })
 
       if (imgLoaded.path !== null) {
-      const $thumbnail = await axios.post(`/api/images/temp-image-handle`, imgLoaded)
+      const $thumbnail = await axios.put(`/api/images`, imgLoaded)
         .then(resp => {
           localStorage.removeItem('path')
           localStorage.removeItem('name')
@@ -108,7 +95,7 @@ export default function NewsForm() {
         payload.thumbnail_id = $thumbnail.image.id
       }
 
-      await axios.post(`/api/news/add`, payload).then(
+      await axios.post(`/api/news`, payload).then(
         res => {
           if (res.status === 201) {
             alert('News created successfully!')

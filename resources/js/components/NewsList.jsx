@@ -3,26 +3,26 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 export default function DisplayNews() {
-  const [news, setNews] = useState([]);                  
-  const [currentPage, setCurrentPage] = useState(1);    
-  const [totalPages, setTotalPages] = useState(0);       
-  const newsPerPage = 7;                              
+  const [news, setNews] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const newsPerPage = 7;
   const navigate = useNavigate();
 
   const fetchPage = page => {
-    axios.get('/api/news/gets', {
-      params: { 
-        page, 
-        per_page: newsPerPage 
+    axios.get('/api/news', {
+      params: {
+        page,
+        per_page: newsPerPage
       }
     })
-    .then(res => {
-      const { data, current_page, last_page } = res.data;
-      setNews(data);                  // mảng bản ghi
-      setCurrentPage(current_page);
-      setTotalPages(last_page);
-    })
-    .catch(console.error);
+      .then(res => {
+        const { data, current_page, last_page } = res.data;
+        setNews(data);                 
+        setCurrentPage(current_page);
+        setTotalPages(last_page);
+      })
+      .catch(console.error);
   };
 
   useEffect(() => {
@@ -45,11 +45,13 @@ export default function DisplayNews() {
 
   const deleteNews = news => {
     if (window.confirm(`Are you sure you want to delete the news: ${news.title}?`)) {
-      axios.delete(`/api/news/delete`,{
-        data: { id: news.id }
-      })
+      axios.delete(`/api/news/${news.id}`)
         .then(() => {
-          setNews(prevNews => prevNews.filter(n => n.id !== news.id));
+          const isOnlyItemOnPage = news.length === 1;
+          const nextPage = isOnlyItemOnPage && currentPage > 1
+            ? currentPage - 1
+            : currentPage;
+          fetchPage(nextPage);
         })
         .catch(err => {
           console.error('Error deleting news:', err);
@@ -77,21 +79,21 @@ export default function DisplayNews() {
               <tr key={n.id} className="hover:bg-gray-100">
                 <td className="px-4 py-3">{n.title}</td>
                 <td className="px-4 py-3 text-center">
-                  {new Date(n.create_at).toLocaleDateString('VN')}
+                  {new Date(n.updated_at).toLocaleDateString('VN')}
                 </td>
                 <td className="px-4 py-3 text-center">
-                    <button 
-                        onClick={() => editNews(n)}
-                        className="px-3 py-1 mx-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                    >
-                        Edit
-                    </button>
-                    <button 
-                        onClick={() => deleteNews(n)}
-                        className="px-3 py-1 mx-2 bg-red-600 text-white rounded hover:bg-red-700"
-                    >
-                        Delete
-                    </button>
+                  <button
+                    onClick={() => editNews(n)}
+                    className="px-3 py-1 mx-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => deleteNews(n)}
+                    className="px-3 py-1 mx-2 bg-red-600 text-white rounded hover:bg-red-700"
+                  >
+                    Delete
+                  </button>
                 </td>
               </tr>
             ))}
@@ -101,7 +103,7 @@ export default function DisplayNews() {
 
       {/* Pagination Controls */}
       <div className="flex justify-center space-x-1 mt-4">
-        <button 
+        <button
           onClick={() => goToPage(currentPage - 1)}
           disabled={currentPage === 1}
           className="px-3 py-1 border rounded disabled:opacity-50"
@@ -111,19 +113,18 @@ export default function DisplayNews() {
 
         {Array.from({ length: totalPages }, (_, i) => (
           <button
-            key={i+1}
-            onClick={() => goToPage(i+1)}
-            className={`px-3 py-1 border rounded ${
-              currentPage === i+1 
-                ? 'bg-blue-600 text-white border-blue-600' 
+            key={i + 1}
+            onClick={() => goToPage(i + 1)}
+            className={`px-3 py-1 border rounded ${currentPage === i + 1
+                ? 'bg-blue-600 text-white border-blue-600'
                 : 'hover:bg-gray-100'
-            }`}
+              }`}
           >
-            {i+1}
+            {i + 1}
           </button>
         ))}
 
-        <button 
+        <button
           onClick={() => goToPage(currentPage + 1)}
           disabled={currentPage === totalPages}
           className="px-3 py-1 border rounded disabled:opacity-50"

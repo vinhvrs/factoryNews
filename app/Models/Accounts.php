@@ -5,10 +5,9 @@ use Illuminate\Database\Eloquent\Model;
 use Ramsey\Uuid\Uuid;
 class Accounts extends Model{
     protected $table = 'accounts';
-    protected $primaryKey = 'id';
     protected $keyType = 'string';
-    protected $fillable = ['username', 'password', 'role', 'email', 'name'];
-    public $timestamps = false;
+    protected $fillable = ['id', 'username', 'password', 'role', 'email', 'name'];
+    public $timestamps = true;
 
 
     protected static function booted(){
