@@ -50,7 +50,7 @@ class NewsController extends Controller{
             'author_id' => 'sometimes|string|exists:accounts,id',
             'created_at' => 'sometimes|date_format:Y-m-d',
             'updated_at' => 'sometimes|date_format:Y-m-d',
-            'field' => 'sometimes|string',
+            'fields' => 'sometimes|string',
             'order' => 'sometimes|string|in:asc,desc',
             'page' => 'sometimes|integer|min:1',
             'perPage' => 'sometimes|integer|min:1|max:100',
@@ -63,7 +63,7 @@ class NewsController extends Controller{
             'updated_at' => $data['updated_at'] ?? null,
         ];
 
-        $rawFields = $data['field'] ?? '';
+        $rawFields = $data['fields'] ?? '';
         $parts = array_filter(explode(',', $rawFields), fn($f) => !empty($f));
         $allowed = ['id', 'title', 'content', 'author_id', 'created_at'];
         $select = array_intersect($allowed, $parts);

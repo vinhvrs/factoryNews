@@ -7,8 +7,6 @@ use Ramsey\Uuid\Uuid;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class AccountRepository implements AccountInterface{
-    public int $limit = 10;
-
     public function __construct(){
         $this->accounts = [];
     }

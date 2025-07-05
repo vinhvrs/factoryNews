@@ -19,10 +19,60 @@ class ImageController extends Controller{
     // ================ GET IMAGES ==============
 
     public function index(Request $request): JsonResponse{
-        $id = $request->route('id', '');
-        $name = $request->query('name', '');
-        $path = $request->query('path', '');
-        $image = $this->imageRepository->get($id, $name, $path);
+        $data = $request->validate([
+            'name' => 'sometimes|string',
+            'path' => 'sometimes|string',
+            'alt' => 'sometimes|string',
+            'fields' => 'sometimes|string',
+            'page' => 'sometimes|integer|min:1',
+            'perPage' => 'sometimes|integer|min:1|max:100',
+        ]);
+
+        $filters = ([
+            'name' => $data['name'] ?? null,
+            'path' => $data['path'] ?? null,
+            'alt' => $data['alt'] ?? null
+        ]);
+        $rawFields = $data['fields'] ?? '';
+        $parts = array_filter(explode(',', $rawFields),
+                            fn($f) => !empty($f));
+        $allowed = ['id', 'name', 'path', 'alt', 'created_at'];
+        $select = array_intersect($allowed, $parts);
+
+        if (empty($select)) {
+            $select = ['*'];
+        }
+
+        $image = $this->imageRepository->getAll($filters, $select, $data['perPage'] ?? 10);
+        if (!$image) {
+            return response()->json(['message' => 'Image not found'], status: 404);
+        }
+        return response()->json($image, 200);
+    }
+
+    public function show(Request $request): JsonResponse{
+        $id = $request->route('id');
+        $data = $request->validate([
+            'name' => 'sometimes|string',
+            'path' => 'sometimes|string',
+            'alt' => 'sometimes|string',
+            'fields' => 'sometimes|string',
+            'order' => 'sometimes|string|in:asc,desc',
+            'page' => 'sometimes|integer|min:1',
+            'perPage' => 'sometimes|integer|min:1|max:100',
+        ]);
+
+        $rawFields = $data['fields'] ?? '';
+        $parts = array_filter(explode(',', $rawFields),
+                            fn($f) => !empty($f));
+        $allowed = ['name', 'path', 'alt', 'created_at'];
+        $select = array_intersect($allowed, $parts);
+
+        if (empty($select)) {
+            $select = ['*'];
+        }
+
+        $image = $this->imageRepository->get($id, $select);
         if (!$image) {
             return response()->json(['message' => 'Image not found'], status: 404);
         }

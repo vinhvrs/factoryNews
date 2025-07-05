@@ -7,8 +7,6 @@ use App\Repositories\Interfaces\NewsInterface as NewsInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class NewsRepository implements NewsInterface {
-    protected $limit = 10;
-
     public function __construct(){
         $this->news = [];
     }

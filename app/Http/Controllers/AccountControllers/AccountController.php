@@ -23,7 +23,7 @@ class AccountController extends Controller
             'username' => 'sometimes|string',
             'email' => 'sometimes|string',
             'name' => 'sometimes|string',
-            'field' => 'sometimes|string',
+            'fields' => 'sometimes|string',
             'order' => 'sometimes|string|in:asc,desc',
             'page' => 'sometimes|integer|min:1',
             'perPage' => 'sometimes|integer|min:1|max:100',
@@ -35,13 +35,11 @@ class AccountController extends Controller
             'name' => $data['name'] ?? null,
         ];
 
-        $rawFields = $data['field'] ?? '';
+        $rawFields = $data['fields'] ?? '';
         $parts = array_filter(explode(',', $rawFields),
                             fn($f) => !empty($f));
         $allowed = ['id', 'username', 'email', 'name', 'role', 'created_at'];
         $select = array_intersect($allowed, $parts);
-
-        //return response()->json($select);
 
         if (empty($select)) {
             $select = ['*'];
@@ -56,7 +54,7 @@ class AccountController extends Controller
         );
 
         if ($paginator->isEmpty()) {
-            return response()->json(['message' => 'No accounts found'], 404);
+            return response()->json(['message' => 'No accounts found'], status: 404);
         }
 
         return response()->json($paginator, 200);
@@ -66,9 +64,9 @@ class AccountController extends Controller
     {
         $id = $request->route('id');
         $data = $request->validate([
-            'field' => 'sometimes|string',
+            'fields' => 'sometimes|string',
         ]);
-        $fields = $data['field'] ?? '';
+        $fields = $data['fields'] ?? '';
         $allowed = ['username', 'name', 'email', 'role'];
         $parts = array_filter(explode(',', $fields), fn($f) => !empty($f));
         $select = array_intersect($allowed, $parts);
@@ -103,7 +101,7 @@ class AccountController extends Controller
         $account = $this->accountRepository->create($data);
 
         if (!$account) {
-            return response()->json(['message' => 'Account creation failed'], 500);
+            return response()->json(['message' => 'Account creation failed'], status: 500);
         }
         $account = [
             'id' => $account->id,
@@ -122,7 +120,7 @@ class AccountController extends Controller
         $id = $request->route('id');
 
         if (!$id) {
-            return response()->json(['message' => 'Account ID is required'], 400);
+            return response()->json(['message' => 'Account ID is required'], status: 400);
         }
 
         $data = $request->validate([
